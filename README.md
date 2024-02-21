@@ -1,2 +1,6 @@
-# SOA-Course
-Service-Oriented Architecture course in HSE university
+# СОА Проект
+Автор: Кручинин Илья Алексеевич
+
+Группа: ПМИ-216
+
+Проект: Социальная сеть
