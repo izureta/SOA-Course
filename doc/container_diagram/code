@@ -1,0 +1,32 @@
+@startuml
+!theme materia
+title Container Diagram - Social Network 
+
+package "Main Service" as MainService {
+  database "User Database" as UserDB
+  component "RESTful API"
+  component "User Registration"
+  component "User Authentication"
+  component "gRPC Client" as Main_gRPC_Client
+}
+
+package "Post and Comments Service" as PostService {
+  component "gRPC Server" as Post_gRPC_Server
+  database "Post Database" as PostDB
+  component "Post Processor" as Post_Processor
+}
+
+package "Statistic Service" as StatService {
+  database "ClickHouse Database" as CHDB
+  component "Statistic Processor"
+  component "Message Broker" as Message_Broker
+}
+
+Post_gRPC_Server --> Post_Processor
+Post_Processor --> PostDB
+MainService --> UserDB : Read/Write Data
+Main_gRPC_Client --> Post_gRPC_Server : Request via gRPC
+PostService --> PostDB : Read/Write Data
+Main_gRPC_Client --> "Statistic Processor" : Send view/like events via gRPC
+Message_Broker --> CHDB : Read/Write Data
+@enduml
