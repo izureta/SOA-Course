@@ -6,6 +6,10 @@
 С первого терминала:
 
 ```bash
+git clone https://github.com/izureta/SOA-Course.git
+cd SOA-Course
+git fetch origin pull/3/head:check_hw_2
+git checkout check_hw_2
 cd user-service
 docker-compose up --build
 ```
