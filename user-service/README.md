@@ -17,7 +17,7 @@ docker-compose up --build
 Со второго:
 
 ```bash
-curl -X POST http://localhost:5000/register -H "Content-Type: application/json" -d '{"username": "user1”, "password": "password1”}’
+curl -X POST http://localhost:5000/register -H "Content-Type: application/json" -d '{"username": "user1", "password": "password1"}'
 curl -X GET http://localhost:5000/users -H "Content-Type: application/json" -d '{"secret_key": "1234"}'
 curl -X POST http://localhost:5000/register -H "Content-Type: application/json" -d '{"username": "user2", "password": "password2"}'
 curl -X GET http://localhost:5000/users -H "Content-Type: application/json" -d '{"secret_key": "1234"}'
