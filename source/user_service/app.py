@@ -40,8 +40,8 @@ def init_db():
 
 @app.route('/register', methods=['POST'])
 def register_user():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.headers.get('Login')
+    password = request.headers.get('Password')
 
     hashed_password = generate_password_hash(password)
 
@@ -66,8 +66,8 @@ def register_user():
 
 @app.route('/update', methods=['PUT'])
 def update_user():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.headers.get('Login')
+    password = request.headers.get('Password')
     first_name = request.json.get('first_name')
     last_name = request.json.get('last_name')
     birth_day = request.json.get('birth_day')
@@ -133,8 +133,8 @@ def authorize(username, password):
 
 @app.route('/login', methods=['POST'])
 def login_user():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.headers.get('Login')
+    password = request.headers.get('Password')
 
     if authorize(username, password):
         return jsonify({'message': 'Login successful'}), 200
@@ -160,8 +160,8 @@ post_stub = posts_pb2_grpc.PostServiceStub(post_channel)
 
 @app.route('/create_post', methods=['POST'])
 def create_post():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.headers.get('Login')
+    password = request.headers.get('Password')
     
     if not authorize(username, password):
         return jsonify({'error': 'Invalid username or password'}), 401
@@ -175,8 +175,8 @@ def create_post():
 
 @app.route('/update_post', methods=['POST'])
 def update_post():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.headers.get('Login')
+    password = request.headers.get('Password')
     
     if not authorize(username, password):
         return jsonify({'error': 'Invalid username or password'}), 401
@@ -191,8 +191,8 @@ def update_post():
 
 @app.route('/delete_post', methods=['DELETE'])
 def delete_post():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.headers.get('Login')
+    password = request.headers.get('Password')
     
     if not authorize(username, password):
         return jsonify({'error': 'Invalid username or password'}), 401
@@ -205,8 +205,8 @@ def delete_post():
 
 @app.route('/get_post', methods=['GET'])
 def get_post():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.headers.get('Login')
+    password = request.headers.get('Password')
     
     if not authorize(username, password):
         return jsonify({'error': 'Invalid username or password'}), 401
@@ -218,8 +218,8 @@ def get_post():
 
 @app.route('/list_posts', methods=['GET'])
 def list_posts():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.headers.get('Login')
+    password = request.headers.get('Password')
     
     if not authorize(username, password):
         return jsonify({'error': 'Invalid username or password'}), 401
