@@ -1,0 +1,42 @@
+version: '3.1'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+
+  post_service:
+    build: 
+      context: ./
+      dockerfile: ./post_service.Dockerfile
+    ports:
+      - "50051:50051"
+    links:
+      - mongo
+    depends_on:
+      - mongo
+
+  user_db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: user-database
+    ports:
+      - "5432:5432"
+
+  user_service:
+    build: 
+      context: ./
+      dockerfile: ./user_service.Dockerfile
+    depends_on:
+      - user_db
+      - post_service
+    environment:
+      DATABASE_URL: postgres://user:password@user_db:5432/user-database
+      DEV_SECRET_KEY: 1234
+    ports:
+      - "5000:5000"

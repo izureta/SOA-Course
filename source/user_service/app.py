@@ -1,7 +1,12 @@
+import sys
 import os
 import psycopg2
+import grpc
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+import posts_pb2
+import posts_pb2_grpc
+
 
 app = Flask(__name__)
 
@@ -110,11 +115,7 @@ def update_user():
         conn.close()
 
 
-@app.route('/login', methods=['POST'])
-def login_user():
-    username = request.json['username']
-    password = request.json['password']
-
+def authorize(username, password):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT id, password FROM users WHERE username = %s', (username,))
@@ -124,7 +125,19 @@ def login_user():
     conn.close()
 
     if user and check_password_hash(user[1], password):
-        return jsonify({'message': 'Login successful', 'user_id': user[0]}), 200
+        return True
+    else:
+        return False
+
+
+
+@app.route('/login', methods=['POST'])
+def login_user():
+    username = request.json['username']
+    password = request.json['password']
+
+    if authorize(username, password):
+        return jsonify({'message': 'Login successful'}), 200
     else:
         return jsonify({'error': 'Invalid username or password'}), 401
 
@@ -140,6 +153,86 @@ def get_users():
     cur.close()
     conn.close()
     return jsonify(users)
+
+
+post_channel = grpc.insecure_channel('post_service:50051')
+post_stub = posts_pb2_grpc.PostServiceStub(post_channel)
+
+@app.route('/create_post', methods=['POST'])
+def create_post():
+    username = request.json['username']
+    password = request.json['password']
+    
+    if not authorize(username, password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    user_id = int(request.json['user_id'])
+    title = request.json['title']
+    content = request.json['content']
+    response = post_stub.CreatePost(posts_pb2.CreatePostRequest(user_id=user_id, title=title, content=content))
+    return jsonify({'id': response.post.id, 'title': response.post.title, 'content': response.post.content})
+
+
+@app.route('/update_post', methods=['POST'])
+def update_post():
+    username = request.json['username']
+    password = request.json['password']
+    
+    if not authorize(username, password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    post_id = int(request.json['post_id'])
+    user_id = int(request.json['user_id'])
+    title = request.json['title']
+    content = request.json['content']
+    response = post_stub.UpdatePost(posts_pb2.UpdatePostRequest(id=post_id, user_id=user_id, title=title, content=content))
+    return jsonify({'id': response.post.id, 'title': response.post.title, 'content': response.post.content})
+
+
+@app.route('/delete_post', methods=['DELETE'])
+def delete_post():
+    username = request.json['username']
+    password = request.json['password']
+    
+    if not authorize(username, password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    post_id = int(request.json['post_id'])
+    user_id = int(request.json['user_id'])
+    response = post_stub.DeletePost(posts_pb2.DeletePostRequest(id=post_id, user_id=user_id))
+    return jsonify({'success': response.success})
+
+
+@app.route('/get_post', methods=['GET'])
+def get_post():
+    username = request.json['username']
+    password = request.json['password']
+    
+    if not authorize(username, password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    post_id = int(request.json['post_id'])
+    response = post_stub.GetPost(posts_pb2.GetPostRequest(id=post_id))
+    return jsonify({'id': response.post.id, 'title': response.post.title, 'content': response.post.content})
+
+
+@app.route('/list_posts', methods=['GET'])
+def list_posts():
+    username = request.json['username']
+    password = request.json['password']
+    
+    if not authorize(username, password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    user_id = int(request.json['user_id'])
+    response = post_stub.ListPosts(posts_pb2.ListPostsRequest(user_id=user_id))
+
+    page_num = 1
+    result = {}
+    for post in response.posts:
+        result['post_' + str(page_num)] = {'id': post.id, 'title': post.title, 'content': post.content}
+        page_num += 1
+    return jsonify(result)
 
 
 if __name__ == '__main__':
